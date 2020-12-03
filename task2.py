@@ -1,9 +1,9 @@
 import numpy as np
 import numpy.random as rnd
-import sklearn.neural_network as nn # not ideal but I see no reason why an MLPClassifier can't be used for Tasks 2 and 3
-# GA code is borrowed from a cited source (will add to report)
-# kicks up an error in SKLearn, not sure why, will debug
+import sklearn.neural_network as nn
+# GA code is borrowed from a cited source in the report
 
+# sorting out dataset!
 def sort_data():
     # load the data, shuffle it and get a 50:50 TTS
     data = np.loadtxt("two_spirals.dat")
@@ -25,16 +25,20 @@ def ready_for_input(dataset):
 
 
 node_numbers = [0, 1, 2, 3, 4, 5, 6, 7, 8] # reasonable range of layer sizes
+                                           # where 0 indicates "no layer"
+
+# Modified GA code from example!
 
 def initialize():
    population = []
    for i in range(10):
-       this_individual = [0, 0, 0, 0]
+       this_individual = [0, 0, 0, 0] # max. 4 layers (reasonable complexity)
        for j in range (4):
            this_individual[j] = np.random.choice(node_numbers)
        population.append(this_individual)
-   return np.array(population) # get 10 (in this case) random initial structures
+   return np.array(population) # get 10 random initial structures
 
+# standard loss function
 def getloss(pred, labs):
     err = 0.0
     for i in range(len(pred)):
@@ -42,8 +46,9 @@ def getloss(pred, labs):
         err = err + curr_err
     return err
 
+# function to minimise with GA
 def cost_function(array, data, labels):
-    remove_zeros = array[array != 0]
+    remove_zeros = array[array != 0] #cannot pass "0" as a layer size to MLPClassifier!
     structure = tuple(remove_zeros)
     neuralnet = nn.MLPClassifier(structure, solver='sgd')
     neuralnet = neuralnet.fit(data, labels)
@@ -51,6 +56,7 @@ def cost_function(array, data, labels):
     loss = getloss(predictions, labels)
     return loss
 
+# evaluate population fitness
 def eval_fit_population(population):
    result = {}
    fit_vals_lst = []
@@ -64,6 +70,7 @@ def eval_fit_population(population):
    result["solution"] = np.array(solutions)
    return result
 
+# to select parents
 def pickOne(population):
    fit_bag_evals = eval_fit_population(population)
    a=True
@@ -76,6 +83,7 @@ def pickOne(population):
          a = False
    return pickedSol
 
+# crossover function
 def crossover(solA, solB):
    n     = len(solA)
    child = [np.nan for i in range(n)]
@@ -92,6 +100,7 @@ def crossover(solA, solB):
                break
    return child
 
+# mutation function
 def mutation(sol):
    n = len(sol)
    pos_1 = rnd.randint(0,n-1)
@@ -99,6 +108,7 @@ def mutation(sol):
    result = swap(sol, pos_1, pos_2)
    return result
 
+# swap function
 def swap(sol, posA, posB):
    result = sol.copy()
    elA = sol[posA]
@@ -106,6 +116,8 @@ def swap(sol, posA, posB):
    result[posA] = elB
    result[posB] = elA
    return result
+
+# methods defined! algorithm is run as below!
 
 train, test = sort_data()
 train_feats, train_labels = ready_for_input(train)
@@ -137,14 +149,14 @@ for g in range(20):
       pB = pickOne(pop_bag)
       new_element = pA
       # Crossover the parents
-      if rnd.random() <= 0.87:
+      if rnd.random() <= 0.5:
          new_element = crossover(pA, pB)
       # Mutate the child
-      if rnd.random() <= 0.7:
+      if rnd.random() <= 0.5:
          new_element = mutation(new_element)
       # Append the child to the bag
       new_pop_bag.append(new_element)
    # Set the new bag as the population bag
    pop_bag = np.array(new_pop_bag)
-   print("g="+str(g))
-#return best_fit_global, best_solution_global
+   print("Global best fit:" +str(best_fit_global))
+   print("Global best solution:" +str(best_solution_global))
