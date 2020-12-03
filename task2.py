@@ -49,6 +49,7 @@ def getloss(pred, labs):
 # function to minimise with GA
 def cost_function(array, data, labels):
     remove_zeros = array[array != 0] #cannot pass "0" as a layer size to MLPClassifier!
+    remove_zeros = remove_zeros.astype('int') #int vals can end up converted to float vals, which throws an error from SKLearn
     structure = tuple(remove_zeros)
     neuralnet = nn.MLPClassifier(structure, solver='sgd')
     neuralnet = neuralnet.fit(data, labels)
